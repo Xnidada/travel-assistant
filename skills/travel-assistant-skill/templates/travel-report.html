@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{CITY}}旅行规划</title>
+    <style>
+        :root {
+            --primary: #1890ff; --success: #52c41a; --warning: #faad14;
+            --danger: #ff4d4f; --bg: #f5f7fa; --card: #fff; --text: #333;
+            --text2: #666; --border: #e8e8e8; --radius: 12px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; padding: 40px 20px; border-radius: var(--radius); margin-bottom: 24px; text-align: center; }
+        .header h1 { font-size: 2em; margin-bottom: 8px; }
+        .header .meta { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; font-size: 0.95em; opacity: 0.9; }
+
+        .section { background: var(--card); border-radius: var(--radius); padding: 24px; margin-bottom: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+        .section h2 { font-size: 1.4em; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid var(--primary); color: var(--primary); }
+
+        #map { width: 100%; height: 550px; border-radius: 8px; }
+        .map-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+        .map-legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.85em; }
+        .map-legend-dot { width: 16px; height: 16px; border-radius: 50%; }
+
+        /* Timeline with inline routes */
+        .day-card { background: #f8f9fa; border-radius: 8px; padding: 20px; margin-bottom: 16px; }
+        .day-card h3 { margin-bottom: 12px; font-size: 1.15em; }
+        .timeline { position: relative; padding-left: 28px; }
+        .timeline-item { position: relative; margin-bottom: 4px; }
+        .timeline-dot { position: absolute; left: -28px; top: 6px; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 2px rgba(0,0,0,0.1); }
+        .timeline-item::before { content: ''; position: absolute; left: -22px; top: 20px; bottom: -4px; width: 2px; background: #e8e8e8; }
+        .timeline-item:last-child::before { display: none; }
+        .timeline-content h4 { font-size: 1em; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+        .type-badge { display: inline-block; background: #e6f7ff; color: #096dd9; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; }
+        .ticket-badge { display: inline-block; background: #fff0f6; color: #c41d7f; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; }
+        .tips { background: #fffbe6; border: 1px solid #ffe58f; padding: 6px 10px; border-radius: 6px; margin-top: 6px; font-size: 0.85em; }
+
+        /* Sequence number */
+        .seq-num { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; color: #fff; font-size: 0.75em; font-weight: 700; flex-shrink: 0; }
+
+        /* Inline route between points */
+        .timeline-route { margin: 2px 0 8px 0; padding-left: 0; }
+        .route-inline { background: #f0f9ff; border-left: 3px solid #91d5ff; border-radius: 0 6px 6px 0; padding: 10px 14px; font-size: 0.82em; }
+        .route-arrow { font-weight: 600; color: var(--text2); margin-bottom: 4px; }
+        .route-brief { color: var(--text2); margin-bottom: 6px; font-size: 0.9em; }
+        .route-segs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+        .seg-chip { display: inline-block; background: #e6f7ff; color: #096dd9; padding: 4px 10px; border-radius: 12px; white-space: normal; word-break: break-word; max-width: 100%; line-height: 1.4; margin-bottom: 4px; }
+
+        /* Hotels */
+        .hotel-night { margin-bottom: 20px; }
+        .hotel-night h3 { color: var(--danger); margin-bottom: 10px; }
+        .hotel-card { background: #f8f9fa; border-radius: 8px; padding: 16px; margin-bottom: 10px; border-left: 4px solid var(--danger); }
+        .hotel-card h4 { margin-bottom: 6px; }
+        .hotel-meta { display: flex; flex-wrap: wrap; gap: 12px; font-size: 0.9em; color: var(--text2); margin-bottom: 6px; }
+        .badge { background: #e6f7ff; color: #096dd9; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; }
+        .hotel-highlights { font-size: 0.85em; color: var(--text2); margin-bottom: 8px; }
+        .btn-book { display: inline-block; background: var(--danger); color: #fff; padding: 6px 16px; border-radius: 6px; text-decoration: none; font-size: 0.85em; }
+        .btn-book:hover { background: #cf1322; }
+        .note-badge { background: #fff1f0; color: var(--danger); padding: 2px 6px; border-radius: 4px; font-size: 0.75em; margin-left: 6px; }
+
+        /* Budget */
+        .budget-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+        .budget-item { background: #f8f9fa; border-radius: 8px; padding: 16px; text-align: center; }
+        .budget-icon { font-size: 1.5em; }
+        .budget-name { font-size: 0.85em; color: var(--text2); }
+        .budget-amount { font-size: 1.2em; font-weight: 600; margin: 4px 0; }
+        .budget-bar { height: 6px; background: #e8e8e8; border-radius: 3px; overflow: hidden; }
+        .budget-fill { height: 100%; background: var(--primary); border-radius: 3px; }
+        .budget-pct { font-size: 0.8em; color: var(--text2); }
+        .budget-total { grid-column: 1 / -1; background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; border-radius: 8px; padding: 16px; text-align: center; }
+        .budget-total .budget-name, .budget-total .budget-pct { color: rgba(255,255,255,0.8); }
+
+        /* Warnings */
+        .warnings-list { display: grid; gap: 8px; }
+        .warning-item { padding: 10px 14px; border-radius: 8px; font-size: 0.9em; }
+        .severity-high { background: #fff1f0; border-left: 4px solid var(--danger); }
+        .severity-medium { background: #fffbe6; border-left: 4px solid var(--warning); }
+        .severity-low { background: #f6ffed; border-left: 4px solid var(--success); }
+
+        /* Foods */
+        .foods-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+        .food-card { background: #f8f9fa; border-radius: 8px; padding: 16px; border-left: 4px solid var(--warning); }
+        .food-card h4 { margin-bottom: 4px; }
+        .food-card p { font-size: 0.85em; color: var(--text2); }
+        .food-meta { display: flex; gap: 12px; font-size: 0.8em; color: var(--text2); margin-top: 6px; }
+
+        .footer { text-align: center; color: var(--text2); font-size: 0.85em; padding: 20px 0; }
+
+        @media print {
+            body { background: #fff; }
+            .section { box-shadow: none; border: 1px solid #ddd; }
+            #map { height: 300px; }
+        }
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.5em; }
+            .header .meta { gap: 12px; font-size: 0.85em; }
+            .budget-grid { grid-template-columns: repeat(2, 1fr); }
+            .foods-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="header">
+        <h1>{{CITY}}旅行规划</h1>
+        <div class="meta">
+            <span>📅 {{START_TIME}} → {{END_TIME}}</span>
+            <span>⏱️ {{TOTAL_DAYS}}天{{NIGHTS}}晚</span>
+            <span>💰 预算 ¥{{BUDGET}}</span>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>路线地图</h2>
+        <div id="map"></div>
+        <div class="map-legend" id="mapLegend"></div>
+    </div>
+
+    <div class="section">
+        <h2>📋 每日行程</h2>
+        {{DAILY_ITINERARY_HTML}}
+    </div>
+
+    <div class="section">
+        <h2>🏨 推荐酒店</h2>
+        {{HOTELS_HTML}}
+    </div>
+
+    <div class="section">
+        <h2>🍜 推荐美食</h2>
+        {{FOODS_HTML}}
+    </div>
+
+    <div class="section">
+        <h2>💰 预算分配</h2>
+        {{BUDGET_HTML}}
+    </div>
+
+    <div class="section">
+        <h2>⚠️ 避雷建议</h2>
+        {{WARNINGS_HTML}}
+    </div>
+
+    <div class="footer">
+        <p>生成时间: {{GENERATE_TIME}} | 旅伴 </p>
+        <p>⚠️ 行程仅供参考，请以实际情况为准。酒店价格请预订前确认。</p>
+    </div>
+
+</div>
+
+<script src="https://webapi.amap.com/loader.js"></script>
+<script>
+window._AMapSecurityConfig = {
+    securityJsCode: '{{AMAP_SECURITY_CODE}}'
+};
+
+var markersData = {{MAP_MARKERS_JSON}};
+var polylinesData = {{MAP_POLYLINES_JSON}};
+
+AMapLoader.load({
+    key: '{{AMAP_JSAPI_KEY}}',
+    version: '2.0',
+    plugins: ['AMap.Scale', 'AMap.ToolBar']
+}).then(function(AMap) {
+    var map = new AMap.Map('map', {
+        viewMode: '2D',
+        zoom: {{MAP_ZOOM}},
+        center: [{{MAP_CENTER_LNG}}, {{MAP_CENTER_LAT}}]
+    });
+    map.addControl(new AMap.Scale());
+    map.addControl(new AMap.ToolBar({ position: 'RT' }));
+
+    var dayColors = ['#1890ff','#52c41a','#fa8c16','#f5222d','#722ed1','#13c2c2','#eb2f96','#faad14'];
+
+    markersData.forEach(function(m) {
+        var color = m.color || dayColors[(m.day - 1) % dayColors.length] || '#1890ff';
+        var isHotel = m.type === '酒店';
+        var prefix = isHotel ? '🏨' : (m.seq > 0 ? m.seq : '📍');
+        var marker = new AMap.Marker({
+            position: [m.lng, m.lat],
+            title: m.name,
+            offset: new AMap.Pixel(-14, -14),
+            content: '<div style="background:' + color + ';color:#fff;padding:4px 8px;border-radius:14px;font-size:12px;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.2);display:flex;align-items:center;gap:3px"><span style="background:rgba(255,255,255,0.3);border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">' + prefix + '</span>' + m.name + '</div>'
+        });
+        marker.setMap(map);
+
+        var infoContent = '<div style="padding:8px;min-width:120px"><h4 style="margin:0 0 4px">' + m.name + '</h4><p style="color:#666;font-size:12px">' + m.type + (m.day > 0 ? ' · 第' + m.day + '天' : '') + (m.seq > 0 ? ' · 序号' + m.seq : '') + '</p></div>';
+        var info = new AMap.InfoWindow({ content: infoContent, offset: new AMap.Pixel(0, -20) });
+        marker.on('click', function() { info.open(map, marker.getPosition()); });
+    });
+
+    polylinesData.forEach(function(pl) {
+        var polyline = new AMap.Polyline({
+            path: pl.path,
+            strokeColor: pl.color || '#1890ff',
+            strokeWeight: 4,
+            strokeOpacity: 0.7,
+            showDir: true
+        });
+        polyline.setMap(map);
+    });
+
+    var legend = document.getElementById('mapLegend');
+    var days = {};
+    markersData.forEach(function(m) { if (m.day > 0) days[m.day] = m.color || dayColors[(m.day-1)%dayColors.length]; });
+    Object.keys(days).sort(function(a,b){return a-b}).forEach(function(d) {
+        var item = document.createElement('div');
+        item.className = 'map-legend-item';
+        item.innerHTML = '<div class="map-legend-dot" style="background:' + days[d] + '"></div><span>第' + d + '天</span>';
+        legend.appendChild(item);
+    });
+    var hotelItem = document.createElement('div');
+    hotelItem.className = 'map-legend-item';
+    hotelItem.innerHTML = '<div class="map-legend-dot" style="background:#ff4d4f"></div><span>酒店</span>';
+    legend.appendChild(hotelItem);
+
+}).catch(function(e) {
+    console.error('地图加载失败:', e);
+    document.getElementById('map').innerHTML = '<div style="padding:40px;text-align:center;color:#ff4d4f">地图加载失败，请检查网络或API密钥配置</div>';
+});
+</script>
+</body>
+</html>
