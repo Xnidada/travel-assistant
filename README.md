@@ -181,5 +181,4 @@ cd skills/travel-assistant-skill
 
 <p align="center">
   🗺️ 让每一次旅行都有靠谱的规划<br>
-  <sub>Built with ❤️ by Travel Companion</sub>
 </p>
