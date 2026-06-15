@@ -20,35 +20,51 @@
 ### 环境要求
 
 - Python 3.8+
-- Node.js 16+（高德地图服务）
+- Node.js 16+
 - Bash
+- [OpenClaw](https://github.com/openclaw/openclaw) 已安装并配置
 
-### 安装
+### 第一步：安装依赖技能（Skills）
+
+本项目依赖以下 OpenClaw 技能，请通过 [ClawHub](https://clawhub.com) 安装：
 
 ```bash
-git clone https://github.com/Xnidada/travel-assistant.git
-cd travel-assistant
+# 安装 ClawHub CLI（如果尚未安装）
+npm install -g clawhub
 
-# Python 依赖
-pip install -r requirements.txt
-
-# Node.js 依赖
-cd skills/amap-lbs-skill && npm install && cd ../..
+# 安装所需的技能
+clawhub install amap-lbs-skill      # 高德地图 LBS 服务
+clawhub install amap-jsapi-skill    # 高德 JS API 参考文档
+clawhub install flyai               # 飞猪旅行搜索
+clawhub install xiaohongshu         # 小红书数据抓取
 ```
 
-### 配置
+安装完成后，技能将位于 `~/.openclaw/skills/` 目录下。
 
-1. 复制环境变量模板并填入你的 API 密钥：
+### 第二步：安装 Python 依赖
+
+```bash
+pip install -r requirements.txt
+```
+
+### 第三步：配置 API 密钥
+
+1. 复制环境变量模板：
 ```bash
 cp .env.example .env
-# 编辑 .env，填入高德地图等 API Key
 ```
 
-2. 获取 API 密钥：
+2. 编辑 `.env`，填入你的 API 密钥：
    - 📍 [高德地图开放平台](https://console.amap.com/dev/key/app) — 申请 Web 服务 Key 和 JS API Key
-   - 🛒 [飞猪开放平台](https://open.taobao.com/) — 酒店搜索（可选，需申请 `flyai` CLI）
+   - 🛒 [飞猪开放平台](https://open.taobao.com/) — 酒店搜索（需申请 `flyai` CLI）
 
-### 使用
+3. 配置模型 API（可选）：
+```bash
+export MAAS_API_KEY="your_api_key"
+export MAAS_API_URL="your_api_url"
+```
+
+### 第四步：运行
 
 ```bash
 cd skills/travel-assistant-skill
@@ -77,30 +93,37 @@ cd skills/travel-assistant-skill
 ├── requirements.txt                 # Python 依赖
 │
 └── skills/
-    ├── travel-assistant-skill/      # 🎯 核心规划引擎
-    │   ├── travel                   # Bash 启动脚本
-    │   ├── main.py                  # 主程序入口
-    │   ├── config.py                # 配置管理（读取环境变量）
-    │   ├── lib/
-    │   │   ├── amap_client.py       # 高德地图 API 客户端
-    │   │   ├── xhs_client.py        # 小红书数据抓取
-    │   │   ├── flyai_client.py      # 飞猪酒店搜索
-    │   │   ├── ai_analyzer.py       # AI 行程分析与生成
-    │   │   └── tsp_solver.py        # TSP 路径优化算法
-    │   ├── steps/
-    │   │   ├── step0_precheck.py    # 环境预检查
-    │   │   ├── step1_xhs_search.py  # 小红书攻略搜索
-    │   │   ├── step2_hotel_search.py # 酒店搜索
-    │   │   ├── step3_route_plan.py  # 路线规划
-    │   │   ├── step4_budget.py      # 预算分配
-    │   │   └── step5_web_report.py  # HTML 报告生成
-    │   └── templates/
-    │       └── travel-report.html   # 报告 HTML 模板
-    │
-    ├── amap-lbs-skill/              # 高德地图 LBS 服务封装
-    ├── amap-jsapi-skill/            # 高德 JS API 参考文档
-    └── flyai/                       # 飞猪旅行搜索能力
+    └── travel-assistant-skill/      # 🎯 核心规划引擎
+        ├── travel                   # Bash 启动脚本
+        ├── main.py                  # 主程序入口
+        ├── config.py                # 配置管理（读取环境变量）
+        ├── lib/
+        │   ├── amap_client.py       # 高德地图 API 客户端
+        │   ├── xhs_client.py        # 小红书数据抓取
+        │   ├── flyai_client.py      # 飞猪酒店搜索
+        │   ├── ai_analyzer.py       # AI 行程分析与生成
+        │   └── tsp_solver.py        # TSP 路径优化算法
+        ├── steps/
+        │   ├── step0_precheck.py    # 环境预检查
+        │   ├── step1_xhs_search.py  # 小红书攻略搜索
+        │   ├── step2_hotel_search.py # 酒店搜索
+        │   ├── step3_route_plan.py  # 路线规划
+        │   ├── step4_budget.py      # 预算分配
+        │   └── step5_web_report.py  # HTML 报告生成
+        └── templates/
+            └── travel-report.html   # 报告 HTML 模板
 ```
+
+## 🔗 依赖技能说明
+
+本项目依赖以下由社区维护的 OpenClaw 技能，**请勿将这些技能包含在本仓库中**：
+
+| 技能 | 用途 | 安装命令 |
+|------|------|----------|
+| `amap-lbs-skill` | 高德地图 POI 搜索、路线规划 | `clawhub install amap-lbs-skill` |
+| `amap-jsapi-skill` | 高德地图 JS API 文档参考 | `clawhub install amap-jsapi-skill` |
+| `flyai` | 飞猪酒店/机票搜索 | `clawhub install flyai` |
+| `xiaohongshu` | 小红书攻略数据抓取 | `clawhub install xiaohongshu` |
 
 ## ⚙️ 工作流程
 
@@ -109,7 +132,7 @@ cd skills/travel-assistant-skill
     │
     ▼
 ┌─────────────┐
-│ Step 0 预检查 │  验证 API Key、依赖环境
+│ Step 0 预检查 │  验证 API Key、依赖技能是否安装
 └──────┬──────┘
        ▼
 ┌─────────────┐
